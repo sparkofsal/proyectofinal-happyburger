@@ -1,15 +1,15 @@
 """
 menu.py
 
-Happy Burger - Avance 2
-Este módulo define los productos del menú y su administración.
-Los datos se manejan únicamente en memoria.
+Happy Burger - Avance 3
+CRUD de productos del menú con SQLite, manteniendo estructura OOP.
 """
 
+from db import get_connection
+
+
 class MenuItem:
-    """
-    Representa un producto del menú.
-    """
+    """Representa un producto del menú."""
 
     def __init__(self, id_item, nombre, precio):
         self.id_item = id_item
@@ -17,61 +17,70 @@ class MenuItem:
         self.precio = float(precio)
 
     def to_dict(self):
-        """Convierte el producto a diccionario."""
         return {
             "id_item": self.id_item,
             "nombre": self.nombre,
             "precio": self.precio
         }
 
-    def actualizar(self, nombre=None, precio=None):
-        """Actualiza los datos del producto."""
-        if nombre:
-            self.nombre = nombre
-        if precio is not None:
-            self.precio = float(precio)
-
 
 class MenuManager:
-    """
-    Administra productos del menú en memoria.
-    """
-
-    def __init__(self):
-        self._items = {}
-        self._contador_id = 1
-
-        self.agregar("Hamburguesa Clásica", 89)
-        self.agregar("Hamburguesa Doble", 119)
-        self.agregar("Papas", 45)
-        self.agregar("Refresco", 30)
+    """Administra productos del menú usando SQLite (CRUD)."""
 
     def listar(self):
-        """Lista todos los productos."""
-        return [i.to_dict() for i in self._items.values()]
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT id_item, nombre, precio FROM menu ORDER BY id_item;")
+        filas = cur.fetchall()
+        conn.close()
+        return [dict(f) for f in filas]
 
     def agregar(self, nombre, precio):
-        """Agrega un producto."""
-        item = MenuItem(self._contador_id, nombre, precio)
-        self._items[self._contador_id] = item
-        self._contador_id += 1
-        return item.to_dict()
-
-    def eliminar(self, id_item):
-        """Elimina un producto."""
-        if id_item in self._items:
-            del self._items[id_item]
-            return True
-        return False
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO menu (nombre, precio) VALUES (?, ?);",
+            (nombre.strip(), float(precio))
+        )
+        conn.commit()
+        nuevo_id = cur.lastrowid
+        conn.close()
+        return self.buscar_por_id(nuevo_id)
 
     def actualizar(self, id_item, nombre=None, precio=None):
-        """Actualiza un producto."""
-        if id_item not in self._items:
+        item = self.buscar_por_id(id_item)
+        if not item:
             return False
-        self._items[id_item].actualizar(nombre, precio)
+
+        nuevo_nombre = nombre.strip() if nombre else item["nombre"]
+        nuevo_precio = float(precio) if precio is not None else item["precio"]
+
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE menu SET nombre = ?, precio = ? WHERE id_item = ?;",
+            (nuevo_nombre, nuevo_precio, int(id_item))
+        )
+        conn.commit()
+        conn.close()
         return True
 
+    def eliminar(self, id_item):
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM menu WHERE id_item = ?;", (int(id_item),))
+        conn.commit()
+        filas = cur.rowcount
+        conn.close()
+        return filas > 0
+
     def buscar_por_id(self, id_item):
-        """Busca un producto por ID."""
-        item = self._items.get(id_item)
-        return item.to_dict() if item else None
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT id_item, nombre, precio FROM menu WHERE id_item = ?;",
+            (int(id_item),)
+        )
+        fila = cur.fetchone()
+        conn.close()
+        return dict(fila) if fila else None

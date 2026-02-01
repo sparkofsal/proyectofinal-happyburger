@@ -1,20 +1,15 @@
 """
 clientes.py
 
-Happy Burger - Avance 2
-Este módulo define la clase Cliente y su administrador.
-El manejo de datos se realiza únicamente en memoria.
+Happy Burger - Avance 3
+CRUD de clientes con SQLite, manteniendo estructura OOP.
 """
 
-class Cliente:
-    """
-    Representa un cliente del sistema.
+from db import get_connection
 
-    Atributos:
-        id_cliente (int): Identificador del cliente.
-        nombre (str): Nombre del cliente.
-        telefono (str): Teléfono del cliente.
-    """
+
+class Cliente:
+    """Representa un cliente del sistema."""
 
     def __init__(self, id_cliente, nombre, telefono):
         self.id_cliente = id_cliente
@@ -22,56 +17,70 @@ class Cliente:
         self.telefono = telefono
 
     def to_dict(self):
-        """Convierte el cliente a diccionario."""
         return {
             "id_cliente": self.id_cliente,
             "nombre": self.nombre,
             "telefono": self.telefono
         }
 
-    def actualizar(self, nombre=None, telefono=None):
-        """Actualiza los datos del cliente."""
-        if nombre:
-            self.nombre = nombre
-        if telefono:
-            self.telefono = telefono
-
 
 class ClientesManager:
-    """
-    Administra clientes en memoria.
-    """
-
-    def __init__(self):
-        self._clientes = {}
-        self._contador_id = 1
+    """Administra clientes usando SQLite (CRUD)."""
 
     def listar(self):
-        """Lista todos los clientes."""
-        return [c.to_dict() for c in self._clientes.values()]
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT id_cliente, nombre, telefono FROM clientes ORDER BY id_cliente;")
+        filas = cur.fetchall()
+        conn.close()
+        return [dict(f) for f in filas]
 
     def agregar(self, nombre, telefono):
-        """Agrega un cliente."""
-        cliente = Cliente(self._contador_id, nombre, telefono)
-        self._clientes[self._contador_id] = cliente
-        self._contador_id += 1
-        return cliente.to_dict()
-
-    def eliminar(self, id_cliente):
-        """Elimina un cliente por ID."""
-        if id_cliente in self._clientes:
-            del self._clientes[id_cliente]
-            return True
-        return False
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO clientes (nombre, telefono) VALUES (?, ?);",
+            (nombre.strip(), telefono.strip())
+        )
+        conn.commit()
+        nuevo_id = cur.lastrowid
+        conn.close()
+        return self.buscar_por_id(nuevo_id)
 
     def actualizar(self, id_cliente, nombre=None, telefono=None):
-        """Actualiza un cliente."""
-        if id_cliente not in self._clientes:
+        cliente = self.buscar_por_id(id_cliente)
+        if not cliente:
             return False
-        self._clientes[id_cliente].actualizar(nombre, telefono)
+
+        nuevo_nombre = nombre.strip() if nombre else cliente["nombre"]
+        nuevo_telefono = telefono.strip() if telefono else cliente["telefono"]
+
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE clientes SET nombre = ?, telefono = ? WHERE id_cliente = ?;",
+            (nuevo_nombre, nuevo_telefono, int(id_cliente))
+        )
+        conn.commit()
+        conn.close()
         return True
 
+    def eliminar(self, id_cliente):
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM clientes WHERE id_cliente = ?;", (int(id_cliente),))
+        conn.commit()
+        filas = cur.rowcount
+        conn.close()
+        return filas > 0
+
     def buscar_por_id(self, id_cliente):
-        """Busca un cliente por ID."""
-        cliente = self._clientes.get(id_cliente)
-        return cliente.to_dict() if cliente else None
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT id_cliente, nombre, telefono FROM clientes WHERE id_cliente = ?;",
+            (int(id_cliente),)
+        )
+        fila = cur.fetchone()
+        conn.close()
+        return dict(fila) if fila else None
