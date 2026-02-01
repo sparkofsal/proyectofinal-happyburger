@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Happy Burger | Consulta de Pedidos</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Consulta de Pedidos</h1>
+      <p class="sub">Busca un pedido por número.</p>
+
+      <form method="GET">
+        <input type="text" name="pedido_id" placeholder="Ej. 1" value="{{ pedido_id }}">
+        <button type="submit">Buscar</button>
+      </form>
+
+      {% if error %}
+        <div class="alert">{{ error }}</div>
+      {% endif %}
+
+      {% if resultado %}
+        {% set p = resultado["pedido"] %}
+        {% set items = resultado["items"] %}
+
+        <h2>Pedido #{{ p["id_pedido"] }}</h2>
+        <p>Cliente ID: {{ p["id_cliente"] }} | Fecha: {{ p["fecha"] }}</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Unidades</th>
+              <th>Precio</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for it in items %}
+              <tr>
+                <td>{{ it["nombre"] }}</td>
+                <td>{{ it["unidades"] }}</td>
+                <td>${{ "%.2f"|format(it["precio"]) }}</td>
+                <td>${{ "%.2f"|format(it["total_linea"]) }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <p><strong>Total:</strong> ${{ "%.2f"|format(p["total"]) }}</p>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>
