@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Happy Burger | Consulta de Pedidos</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-
 </head>
 <body>
   <div class="wrap">
@@ -13,7 +13,13 @@
       <p class="sub">Busca un pedido por número.</p>
 
       <form method="GET">
-        <input type="text" name="pedido_id" placeholder="Ej. 1" value="{{ pedido_id }}">
+        <input
+          type="text"
+          name="pedido_id"
+          placeholder="Ej. 1"
+          value="{{ pedido_id }}"
+          aria-label="Número de pedido"
+        >
         <button type="submit">Buscar</button>
       </form>
 

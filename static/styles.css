@@ -11,14 +11,20 @@ body {
 }
 
 .card {
-  background: white;
+  background: #ffffff;
   border-radius: 12px;
   padding: 20px;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
-h1 {
+h1,
+h2 {
   margin-top: 0;
+  color: #111827;
+}
+
+.sub {
+  color: #555;
 }
 
 form {
@@ -36,8 +42,12 @@ button {
   border-radius: 6px;
   border: none;
   background: #111827;
-  color: white;
+  color: #ffffff;
   cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.9;
 }
 
 table {
@@ -46,7 +56,8 @@ table {
   margin-top: 12px;
 }
 
-th, td {
+th,
+td {
   padding: 8px;
   border-bottom: 1px solid #ddd;
 }

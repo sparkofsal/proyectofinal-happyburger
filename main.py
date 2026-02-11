@@ -1,12 +1,12 @@
 """
 main.py
 
-Happy Burger - Avance 3
-Consola con persistencia SQLite:
-- CRUD Clientes
-- CRUD Menú
-- Crear pedidos guardando en BD
-- Generar ticket .txt por pedido
+Happy Burger (Solo en consola)
+Este archivo controla el menú principal y conecta con:
+- db.py: inicializa la base de datos y la carpeta de tickets
+- clientes.py: CRUD de clientes
+- menu.py: CRUD del menú (productos)
+- pedidos.py: crear pedidos, consultar pedidos y generar tickets .txt
 """
 
 from db import init_db, asegurar_carpeta_tickets
@@ -16,10 +16,12 @@ from pedidos import PedidosManager
 
 
 def pausar():
+    """Pausa simple para que el usuario lea la pantalla antes de continuar."""
     input("\nPresiona Enter para continuar...")
 
 
 def leer_entero_positivo(mensaje):
+    """Lee un entero >= 1 con validación."""
     while True:
         txt = input(mensaje).strip()
         if not txt.isdigit():
@@ -33,6 +35,7 @@ def leer_entero_positivo(mensaje):
 
 
 def leer_float_positivo(mensaje):
+    """Lee un número decimal > 0 con validación."""
     while True:
         txt = input(mensaje).strip()
         try:
@@ -47,19 +50,20 @@ def leer_float_positivo(mensaje):
 
 
 def menu_principal():
+    """Imprime el menú principal del sistema."""
     print("\n==============================")
     print("        HAPPY BURGER          ")
-    print("           Avance 3           ")
     print("==============================")
-    print("1) Clientes (CRUD)")
-    print("2) Menú (CRUD)")
+    print("1) Clientes")
+    print("2) Menú")
     print("3) Pedidos")
     print("4) Salir")
 
 
 def sub_menu_clientes(cm: ClientesManager):
+    """Submenú para administrar clientes (CRUD)."""
     while True:
-        print("\n--- CLIENTES (CRUD) ---")
+        print("\n--- CLIENTES ---")
         print("1) Listar")
         print("2) Agregar")
         print("3) Actualizar")
@@ -95,10 +99,10 @@ def sub_menu_clientes(cm: ClientesManager):
                 print("❌ No existe ese cliente.")
                 pausar()
                 continue
-            nombre = input(f"Nuevo nombre (Enter para '{actual['nombre']}'): ").strip()
-            telefono = input(f"Nuevo teléfono (Enter para '{actual['telefono']}'): ").strip()
-            nombre = nombre if nombre else None
-            telefono = telefono if telefono else None
+
+            nombre = input(f"Nuevo nombre (Enter para '{actual['nombre']}'): ").strip() or None
+            telefono = input(f"Nuevo teléfono (Enter para '{actual['telefono']}'): ").strip() or None
+
             cm.actualizar(idc, nombre=nombre, telefono=telefono)
             print("✅ Cliente actualizado.")
             pausar()
@@ -117,8 +121,9 @@ def sub_menu_clientes(cm: ClientesManager):
 
 
 def sub_menu_menu(mm: MenuManager):
+    """Submenú para administrar productos del menú (CRUD)."""
     while True:
-        print("\n--- MENÚ (CRUD) ---")
+        print("\n--- MENÚ (PRODUCTOS) ---")
         print("1) Listar")
         print("2) Agregar")
         print("3) Actualizar")
@@ -154,10 +159,10 @@ def sub_menu_menu(mm: MenuManager):
                 print("❌ No existe ese producto.")
                 pausar()
                 continue
-            nombre = input(f"Nuevo nombre (Enter para '{actual['nombre']}'): ").strip()
+
+            nombre = input(f"Nuevo nombre (Enter para '{actual['nombre']}'): ").strip() or None
             precio_txt = input(f"Nuevo precio (Enter para '{actual['precio']}'): ").strip()
 
-            nombre = nombre if nombre else None
             precio = None
             if precio_txt:
                 try:
@@ -184,7 +189,18 @@ def sub_menu_menu(mm: MenuManager):
             pausar()
 
 
+def imprimir_lista_productos(productos):
+    """Muestra una lista de productos con formato consistente."""
+    for p in productos:
+        print(f"ID {p['id_item']} | {p['nombre']} | ${p['precio']:.2f}")
+
+
 def sub_menu_pedidos(cm: ClientesManager, mm: MenuManager, pm: PedidosManager):
+    """
+    Submenú de pedidos:
+    - Crear pedido: selecciona cliente, agrega productos y guarda en SQLite
+    - Consultar pedido: busca por número y muestra el detalle
+    """
     while True:
         print("\n--- PEDIDOS ---")
         print("1) Crear pedido")
@@ -194,15 +210,13 @@ def sub_menu_pedidos(cm: ClientesManager, mm: MenuManager, pm: PedidosManager):
         op = input("Opción: ").strip()
 
         if op == "1":
-            # 1) Elegir cliente existente
             id_cliente = leer_entero_positivo("ID del cliente: ")
             cliente = cm.buscar_por_id(id_cliente)
             if not cliente:
-                print("❌ Ese cliente no existe. Agrégalo en Clientes.")
+                print("❌ Ese cliente no existe. Primero agréguelo en Clientes.")
                 pausar()
                 continue
 
-            # 2) Agregar productos existentes
             items_pedido = []
             print("\nAgrega productos al pedido (Enter para terminar).")
 
@@ -212,8 +226,7 @@ def sub_menu_pedidos(cm: ClientesManager, mm: MenuManager, pm: PedidosManager):
                     print("❌ No hay productos en el menú. Agrega productos primero.")
                     break
 
-                for p in productos:
-                    print(f"ID {p['id_item']} | {p['nombre']} | ${p['precio']:.2f}")
+                imprimir_lista_productos(productos)
 
                 id_txt = input("\nID producto (Enter para terminar): ").strip()
                 if id_txt == "":
@@ -242,7 +255,6 @@ def sub_menu_pedidos(cm: ClientesManager, mm: MenuManager, pm: PedidosManager):
                 pausar()
                 continue
 
-            # 3) Guardar pedido + ticket
             id_pedido = pm.crear_pedido(id_cliente, items_pedido)
             print(f"\n✅ Pedido guardado con número: {id_pedido}")
             print(f"✅ Ticket generado: tickets/ticket_{id_pedido}.txt")
@@ -273,7 +285,6 @@ def sub_menu_pedidos(cm: ClientesManager, mm: MenuManager, pm: PedidosManager):
             print(f"IVA     : ${pedido['iva']:.2f}")
             print(f"TOTAL   : ${pedido['total']:.2f}")
             print("==============================")
-
             pausar()
 
         elif op == "3":
@@ -284,7 +295,7 @@ def sub_menu_pedidos(cm: ClientesManager, mm: MenuManager, pm: PedidosManager):
 
 
 def main():
-    # Inicialización del sistema (tablas + carpeta tickets)
+    """Inicializa el sistema y ejecuta el menú principal."""
     init_db()
     asegurar_carpeta_tickets()
 
