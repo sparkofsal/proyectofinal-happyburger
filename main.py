@@ -41,7 +41,7 @@ def leer_float_positivo(mensaje):
         try:
             val = float(txt)
         except ValueError:
-            print("❌ Ingresa un número válido (ej. 10 o 10.50).")
+            print("❌ Ingresa un número válido (ej. 10 o 10.50).") 
             continue
         if val <= 0:
             print("❌ El número debe ser mayor que 0.")
